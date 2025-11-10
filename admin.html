@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Management System</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
+
+    <style>
+        /* General Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-bg: #2f3c4e;
+            --main-bg: #f4f7fa;
+            --accent-green: #84cc16;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --top-nav-height: 70px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--top-nav-height);
+            background-color: #ffffff;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-left {
+
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-right {
+            /* background-color: var(--text-dark); */
+            border-radius: 50px;
+            /* stroke: 2px solid black; */
+            border-width: 2px;
+            border-style: solid;
+            padding: 0px 0px 0px 15px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            border-color: var(--text-dark);
+        }
+
+        .nav-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .nav-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .nav-links ul {
+            padding-left: 16em;
+            display: flex;
+            list-style-type: none;
+            gap: 10px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links li a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .nav-links li a.active {
+            background-color: var(--accent-green);
+            color: var(--text-light);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info span {
+            font-weight: 600;
+            display: block;
+            -webkit-text-fill-color: #2f3c4e;
+        }
+
+        .profile-info small {
+            color: #777;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-top: var(--top-nav-height);
+            /* Push content below top nav */
+            padding: 40px;
+            width: 100%;
+        }
+
+        .main-content header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Dashboard Cards */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border-left: 5px solid var(--accent-green);
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Tables */
+        .table-wrapper {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            font-size: 1.4rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        th {
+            font-weight: 600;
+            background-color: #f9f9f9;
+        }
+
+        .tool-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            color: var(--text-light);
+        }
+
+        .btn-primary:hover {
+            background-color: #76b814;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-approve {
+            background-color: #28a745;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .btn-reject {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: var(--text-dark);
+            margin-right: 5px;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.85;
+        }
+
+        /* Status Labels */
+        .status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            text-align: center;
+        }
+
+        .status.borrowed {
+            background-color: #fff0c1;
+            color: #f59e0b;
+        }
+
+        .status.available {
+            background-color: #dcfce7;
+            color: #22c55e;
+        }
+
+        .status.pending {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .status.rejected {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background-color: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input[type="file"] {
+            padding: 8px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            margin-right: 10px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Logout Button */
+        #logout-btn {
+            background: none;
+            border: 2px solid var(--primary-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary-bg);
+            transition: all 0.3s ease;
+        }
+
+        #logout-btn:hover {
+            background: var(--primary-bg);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="nav-header">
+                <img src="./assets/images/dcrust_logo.jpeg" alt="DCRUST Logo" class="nav-logo">
+                <h2>DCRUST</h2>
+            </div>
+            <nav class="nav-links">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="manage-tools">Manage Tools</a></li>
+                    <li><a href="#" class="nav-link" data-target="manage-requests">Manage Requests</a></li>
+                    <li><a href="#" class="nav-link" data-target="borrowed-tools">Borrowed Tools</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="nav-right">
+            <div class="user-profile">
+                <div class="profile-info">
+                    <span>Admin</span>
+                </div>
+                <img src="https://placehold.co/40x40/2f3c4e/ffffff?text=A" alt="Admin" class="profile-pic">
+            </div>
+            <button id="logout-btn">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <header>
+                <h1>Dashboard</h1>
+            </header>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Pending Requests</h3>
+                    <p class="value" id="dash-pending">0</p>
+                </div>
+                <div class="card">
+                    <h3>Tools Borrowed</h3>
+                    <p class="value" id="dash-borrowed">0</p>
+                </div>
+                <div class="card">
+                    <h3>Total Tools</h3>
+                    <p class="value" id="dash-total">0</p>
+                </div>
+                <div class="card">
+                    <h3>Overdue Tools</h3>
+                    <p class="value" id="dash-overdue" style="-webkit-text-fill-color: tomato;">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Manage Tools Section -->
+        <section id="manage-tools" class="content-section">
+            <div class="table-wrapper">
+                <div class="table-header">
+                    <h2>Tool Inventory</h2>
+                    <button class="btn btn-primary add-tool-btn">Add New Tool</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Tool ID</th>
+                            <th>Tool Name</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Tool rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Manage Requests Section -->
+        <section id="manage-requests" class="content-section">
+            <div class="table-wrapper">
+                <div class="table-header">
+                    <h2>Student Requests</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Tool Requested</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Request rows inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Borrowed Tools Section -->
+        <section id="borrowed-tools" class="content-section">
+            <div class="table-wrapper">
+                <div class="table-header">
+                    <h2>Currently Borrowed Tools</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Borrow ID</th>
+                            <th>Tool Name</th>
+                            <th>Student Name</th>
+                            <th>Issue Date</th>
+                            <th>Return Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Borrowed tool rows inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- The Modal for Add/Edit Tool -->
+    <div id="tool-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Add New Tool</h2>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="tool-form">
+                    <input type="hidden" id="tool-id" name="tool-id">
+                    <div class="form-group">
+                        <label for="tool-name">Tool Name</label>
+                        <input type="text" id="tool-name" name="tool-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tool-quantity">Total Quantity</label>
+                        <input type="number" id="tool-quantity" name="tool-quantity" min="1" required>
+                    </div>
+                    <!-- Hidden field to store current photo URL when editing -->
+                    <input type="hidden" id="current-photo-url">
+                    <div class="form-group">
+                        <label for="tool-photo">Tool Photo (Optional)</label>
+                        <input type="file" id="tool-photo" name="tool-photo" accept="image/*">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        // PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD8kg0sb_PLnRYblhtRBKDLM50SwAesa8",
+            authDomain: "centralworkshop-8b6af.firebaseapp.com",
+            projectId: "centralworkshop-8b6af",
+            storageBucket: "centralworkshop-8b6af.firebasestorage.app",
+            messagingSenderId: "111684741547",
+            appId: "1:111684741547:web:de4a9352e6636e961d8aee",
+            measurementId: "G-0NH62G543Z"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // --- AUTH GUARD ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection('users').doc(user.uid).get()
+                    .then(doc => {
+                        if (doc.exists && doc.data().role === 'admin') {
+                            document.querySelector('.profile-info span').textContent = doc.data().fullName || 'Admin';
+                            initializeApp(user);
+                        } else {
+                            window.location.href = 'user.html';
+                        }
+                    })
+                    .catch(() => auth.signOut());
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // --- MAIN APP LOGIC ---
+        function initializeApp(adminUser) {
+
+            // 1. NAVIGATION
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('data-target');
+                    contentSections.forEach(s => s.classList.remove('active'));
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    document.getElementById(targetId).classList.add('active');
+                    this.classList.add('active');
+                });
+            });
+
+            // 2. LOGOUT
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                auth.signOut().then(() => window.location.href = 'index.html');
+            });
+
+            // 3. MODAL & FORM
+            const modalOverlay = document.getElementById('tool-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const toolForm = document.getElementById('tool-form');
+            const toolIdField = document.getElementById('tool-id');
+            const toolNameField = document.getElementById('tool-name');
+            const toolQuantityField = document.getElementById('tool-quantity');
+            const toolPhotoField = document.getElementById('tool-photo');
+            const currentPhotoUrlField = document.getElementById('current-photo-url');
+
+            const openModal = () => modalOverlay.style.display = 'flex';
+            const closeModal = () => {
+                modalOverlay.style.display = 'none';
+                toolForm.reset();
+                toolIdField.value = '';
+                currentPhotoUrlField.value = '';
+            };
+
+            document.querySelector('.add-tool-btn').addEventListener('click', () => {
+                modalTitle.textContent = 'Add New Tool';
+                openModal();
+            });
+            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', closeModal));
+
+            // 4. REAL-TIME DATA LISTENERS
+
+            // Tools Listener
+            const toolTableBody = document.querySelector('#manage-tools tbody');
+            db.collection('tools').onSnapshot(snapshot => {
+                toolTableBody.innerHTML = '';
+                let totalTools = 0;
+                snapshot.forEach(doc => {
+                    const tool = doc.data();
+                    totalTools += parseInt(tool.totalQuantity) || 0;
+                    const isAvailable = tool.availableQuantity > 0;
+                    toolTableBody.innerHTML += `
+                        <tr data-id="${doc.id}">
+                            <td><img src="${tool.photoURL || 'https://placehold.co/60x60/e0e0e0/333?text=Tool'}" alt="Tool" class="tool-photo"></td>
+                            <td>${doc.id.substring(0, 8)}...</td>
+                            <td class="t-name">${tool.name}</td>
+                            <td class="t-qty">${tool.totalQuantity}</td>
+                            <td><span class="status ${isAvailable ? 'available' : 'borrowed'}">${isAvailable ? 'Available' : 'Out of Stock'} (${tool.availableQuantity})</span></td>
+                            <td>
+                                <button class="btn btn-edit">Edit</button>
+                                <button class="btn btn-delete">Delete</button>
+                            </td>
+                        </tr>`;
+                });
+                document.getElementById('dash-total').textContent = totalTools;
+            });
+
+            // Requests Listener
+            const requestTableBody = document.querySelector('#manage-requests tbody');
+            const borrowedTableBody = document.querySelector('#borrowed-tools tbody');
+            db.collection('requests').orderBy('requestDate', 'desc').onSnapshot(snapshot => {
+                requestTableBody.innerHTML = '';
+                borrowedTableBody.innerHTML = '';
+                let pendingCount = 0, borrowedCount = 0, overdueCount = 0;
+                snapshot.forEach(doc => {
+                    const req = doc.data();
+                    if (req.status === 'pending') {
+                        pendingCount++;
+                        requestTableBody.innerHTML += `
+                            <tr data-id="${doc.id}" data-tool-id="${req.toolId}">
+                                <td>${req.studentName}</td>
+                                <td>${req.toolName}</td>
+                                <td>${req.requestDate ? new Date(req.requestDate.toDate()).toLocaleDateString() : 'N/A'}</td>
+                                <td><span class="status pending">Pending</span></td>
+                                <td><button class="btn btn-approve">Approve</button><button class="btn btn-reject">Reject</button></td>
+                            </tr>`;
+                    }
+                    if (req.status === 'borrowed') {
+                        borrowedCount++;
+                        const returnDate = req.returnDeadline ? new Date(req.returnDeadline.toDate()) : new Date();
+                        const isOverdue = returnDate < new Date();
+                        if (isOverdue) overdueCount++;
+                        borrowedTableBody.innerHTML += `
+                            <tr>
+                                <td>${doc.id.substring(0, 8)}...</td>
+                                <td>${req.toolName}</td>
+                                <td>${req.studentName}</td>
+                                <td>${req.issueDate ? new Date(req.issueDate.toDate()).toLocaleDateString() : 'N/A'}</td>
+                                <td>${returnDate.toLocaleDateString()}</td>
+                                <td><span class="status ${isOverdue ? 'rejected' : 'borrowed'}">${isOverdue ? 'Overdue' : 'Borrowed'}</span></td>
+                            </tr>`;
+                    }
+                });
+                document.getElementById('dash-pending').textContent = pendingCount;
+                document.getElementById('dash-borrowed').textContent = borrowedCount;
+                document.getElementById('dash-overdue').textContent = overdueCount;
+            });
+
+            // 5. EVENT DELEGATION (ACTIONS)
+            document.body.addEventListener('click', async (e) => {
+                // EDIT
+                if (e.target.classList.contains('btn-edit')) {
+                    const row = e.target.closest('tr');
+                    modalTitle.textContent = 'Edit Tool';
+                    toolIdField.value = row.dataset.id;
+                    toolNameField.value = row.querySelector('.t-name').textContent;
+                    toolQuantityField.value = row.querySelector('.t-qty').textContent;
+                    currentPhotoUrlField.value = row.querySelector('.tool-photo').src;
+                    openModal();
+                }
+                // DELETE
+                if (e.target.classList.contains('btn-delete')) {
+                    if (confirm('Delete this tool?')) {
+                        db.collection('tools').doc(e.target.closest('tr').dataset.id).delete();
+                    }
+                }
+                // APPROVE
+                if (e.target.classList.contains('btn-approve')) {
+                    const row = e.target.closest('tr');
+                    try {
+                        await db.runTransaction(async (t) => {
+                            const toolRef = db.collection('tools').doc(row.dataset.toolId);
+                            const toolDoc = await t.get(toolRef);
+                            if (!toolDoc.exists || toolDoc.data().availableQuantity < 1) throw "Tool unavailable";
+                            t.update(toolRef, { availableQuantity: toolDoc.data().availableQuantity - 1 });
+                            const returnDate = new Date(); returnDate.setDate(returnDate.getDate() + 7);
+                            t.update(db.collection('requests').doc(row.dataset.id), {
+                                status: 'borrowed',
+                                issueDate: firebase.firestore.FieldValue.serverTimestamp(),
+                                returnDeadline: firebase.firestore.Timestamp.fromDate(returnDate)
+                            });
+                        });
+                        alert('Approved!');
+                    } catch (err) { alert('Failed: ' + err); }
+                }
+                // REJECT
+                if (e.target.classList.contains('btn-reject')) {
+                    if (confirm('Reject request?')) {
+                        db.collection('requests').doc(e.target.closest('tr').dataset.id).update({ status: 'rejected' });
+                    }
+                }
+            });
+
+            // 6. FORM SUBMIT (ADD/EDIT) - FIXED!
+            toolForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = toolForm.querySelector('button[type="submit"]');
+                btn.disabled = true; btn.textContent = 'Saving...';
+
+                try {
+                    const toolId = toolIdField.value;
+                    const file = toolPhotoField.files[0];
+                    let photoURL = currentPhotoUrlField.value;
+
+                    if (file) {
+                        const ref = storage.ref(`tools/${Date.now()}_${file.name}`);
+                        await ref.put(file);
+                        photoURL = await ref.getDownloadURL();
+                    }
+
+                    const toolData = {
+                        name: toolNameField.value,
+                        totalQuantity: parseInt(toolQuantityField.value),
+                        photoURL: photoURL
+                    };
+
+                    if (toolId) {
+                        // --- UPDATE LOGIC ---
+                        const doc = await db.collection('tools').doc(toolId).get();
+                        const oldTotal = doc.data().totalQuantity || 0;
+                        const oldAvailable = doc.data().availableQuantity || 0;
+                        toolData.availableQuantity = oldAvailable + (toolData.totalQuantity - oldTotal);
+                        await db.collection('tools').doc(toolId).update(toolData);
+                        alert('Tool updated!');
+                    } else {
+                        // --- ADD LOGIC ---
+                        toolData.availableQuantity = toolData.totalQuantity;
+                        await db.collection('tools').add(toolData);
+                        alert('Tool added!');
+                    }
+                    closeModal();
+                } catch (err) {
+                    console.error(err);
+                    alert('Error saving tool.');
+                } finally {
+                    btn.disabled = false; btn.textContent = 'Save Changes';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

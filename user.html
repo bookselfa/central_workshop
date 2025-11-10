@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Tool Portal</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* General Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-bg: #2f3c4e;
+            --main-bg: #f4f7fa;
+            --accent-green: #84cc16;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --top-nav-height: 70px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--top-nav-height);
+            background-color: #ffffff;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-right {
+            padding: 0px 0px 0px 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .nav-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .nav-links ul {
+            padding-left: 20em;
+            display: flex;
+            list-style-type: none;
+            gap: 10px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links li a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .nav-links li a.active {
+            background-color: var(--accent-green);
+            color: var(--text-light);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info span {
+            font-weight: 600;
+            display: block;
+            -webkit-text-fill-color: #2f3c4e;
+        }
+
+        .profile-info small {
+            color: #777;
+        }
+
+        /* Logout Button */
+        .btn-logout {
+            padding: 8px 16px;
+            border: 1px solid var(--primary-bg);
+            background: transparent;
+            color: var(--primary-bg);
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-light);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-top: var(--top-nav-height);
+            padding: 40px;
+            width: 100%;
+        }
+
+        .main-content header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Dashboard Cards */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border-left: 5px solid var(--accent-green);
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Tables */
+        .table-wrapper {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            font-size: 1.4rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        th {
+            font-weight: 600;
+            background-color: #f9f9f9;
+        }
+
+        /* Tool Grid & Cards */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .tool-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-img-wrapper {
+            height: 220px;
+            background-color: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .tool-card:hover .tool-card-img {
+            transform: scale(1.05);
+        }
+
+        .tool-details {
+            padding: 25px;
+        }
+
+        .tool-name {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--primary-bg);
+            margin-bottom: 15px;
+        }
+
+        .tool-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #64748b;
+        }
+
+        .meta-label {
+            font-weight: 500;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tool-card .btn-request {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Profile Section */
+        .profile-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+        }
+
+        @media (min-width: 768px) {
+            .profile-card {
+                flex-direction: row;
+            }
+        }
+
+        .profile-sidebar {
+            background: linear-gradient(135deg, var(--primary-bg), #1e293b);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            min-width: 300px;
+        }
+
+        .profile-large-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+
+        .profile-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .profile-role {
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        .profile-info {
+            padding: 40px;
+            flex-grow: 1;
+        }
+
+        .info-group {
+            margin-bottom: 25px;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            color: var(--primary-bg);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* Buttons & Status */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            color: var(--text-light);
+        }
+
+        .btn-primary:hover {
+            background-color: #76b814;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-request {
+            background-color: var(--primary-bg);
+            color: var(--text-light);
+        }
+
+        .btn-request:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none !important;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .status {
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .status.borrowed {
+            background-color: #fff7ed;
+            color: #ea580c;
+        }
+
+        .status.available {
+            background-color: #ecfdf5;
+            color: #059669;
+        }
+
+        .status.pending {
+            background-color: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .status.rejected {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="nav-header">
+                <img src="./assets/images/dcrust_logo.jpeg" alt="DCRUST Logo" class="nav-logo">
+                <h2>DCRUST</h2>
+            </div>
+            <nav class="nav-links">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="dashboard">My Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="browse-tools">Browse Tools</a></li>
+                    <li><a href="#" class="nav-link" data-target="my-requests">My Requests</a></li>
+                    <li><a href="#" class="nav-link" data-target="my-borrowed">My Tools</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="nav-right">
+            <div class="user-profile">
+                <a href="#" class="nav-link" data-target="profile">
+                    <img src="https://placehold.co/40x40/2f3c4e/ffffff?text=S" alt="Student" class="profile-pic">
+                </a>
+            </div>
+            <button id="logout-btn" class="btn-logout">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Student Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <header>
+                <h1>My Dashboard</h1>
+            </header>
+            <div class="card-container">
+                <div class="card">
+                    <h3>My Pending Requests</h3>
+                    <p class="value" id="dash-pending">0</p>
+                </div>
+                <div class="card">
+                    <h3>Tools Currently Borrowed</h3>
+                    <p class="value" id="dash-borrowed">0</p>
+                </div>
+                <div class="card">
+                    <h3>Tools Due Soon</h3>
+                    <p class="value" id="dash-due" style="-webkit-text-fill-color: #f59e0b;">0</p>
+                </div>
+                <div class="card">
+                    <h3>Overdue Tools</h3>
+                    <p class="value" id="dash-overdue" style="-webkit-text-fill-color: tomato;">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Browse Tools Section -->
+        <section id="browse-tools" class="content-section">
+            <header>
+                <h1>Browse Available Tools</h1>
+            </header>
+            <div class="tool-grid">
+                <p>Loading tools...</p>
+            </div>
+        </section>
+
+        <!-- My Requests Section -->
+        <section id="my-requests" class="content-section">
+            <div class="table-wrapper">
+                <div class="table-header">
+                    <h2>My Request History</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Tool Requested</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4">Loading requests...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- My Borrowed Tools Section -->
+        <section id="my-borrowed" class="content-section">
+            <div class="table-wrapper">
+                <div class="table-header">
+                    <h2>Tools I Have Borrowed</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tool Name</th>
+                            <th>Issue Date</th>
+                            <th>Return Deadline</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4">Loading borrowed tools...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="content-section">
+            <header>
+                <h1>My Profile</h1>
+            </header>
+            <div class="profile-card">
+                <div class="profile-sidebar">
+                    <img src="https://placehold.co/150x150/2f3c4e/ffffff?text=S" alt="Profile"
+                        class="profile-large-img">
+                    <h2 class="profile-name">Loading...</h2>
+                    <p class="profile-role">Student</p>
+                </div>
+                <div class="profile-info">
+                    <div class="info-group">
+                        <div class="info-label">Full Name</div>
+                        <div class="info-value" data-field="fullName">Loading...</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value" data-field="email">Loading...</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Roll Number</div>
+                        <div class="info-value" data-field="rollNumber">Not set</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- Firebase Configuration ---
+        // PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD8kg0sb_PLnRYblhtRBKDLM50SwAesa8",
+            authDomain: "centralworkshop-8b6af.firebaseapp.com",
+            projectId: "centralworkshop-8b6af",
+            storageBucket: "centralworkshop-8b6af.firebasestorage.app",
+            messagingSenderId: "111684741547",
+            appId: "1:111684741547:web:de4a9352e6636e961d8aee",
+            measurementId: "G-0NH62G543Z"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- AUTH GUARD ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Fetch user profile or use fallback if new user
+                db.collection('users').doc(user.uid).get()
+                    .then(doc => {
+                        const userData = doc.exists ? { uid: user.uid, ...doc.data() } : { uid: user.uid, email: user.email, fullName: 'Student' };
+                        initializeApp(userData);
+                    })
+                    .catch(error => {
+                        console.error("Auth Guard Error:", error);
+                        // Fallback to basic user info if Firestore fails
+                        initializeApp({ uid: user.uid, email: user.email, fullName: 'Student' });
+                    });
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // --- MAIN APP LOGIC ---
+        function initializeApp(user) {
+            console.log("App Initialized for:", user.email);
+
+            // 1. NAVIGATION (FIXED & ROBUST)
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            function handleNavigation(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-target');
+                console.log("Navigating to:", targetId);
+
+                // Remove active class from ALL sections and links
+                contentSections.forEach(section => section.classList.remove('active'));
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                // Add active class to TARGET section and link
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                    this.classList.add('active');
+                } else {
+                    console.error(`Target section #${targetId} not found!`);
+                }
+            }
+
+            // Attach listener to each link individually for better control
+            navLinks.forEach(link => {
+                link.removeEventListener('click', handleNavigation); // Prevent duplicate listeners
+                link.addEventListener('click', handleNavigation);
+            });
+
+            // 2. Logout
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                auth.signOut().then(() => window.location.href = 'index.html');
+            });
+
+            // 3. Render Profile
+            document.querySelector('.profile-name').textContent = user.fullName || 'Student';
+            document.querySelector('.info-value[data-field="fullName"]').textContent = user.fullName || 'N/A';
+            document.querySelector('.info-value[data-field="email"]').textContent = user.email || 'N/A';
+            if (user.rollNumber) document.querySelector('.info-value[data-field="rollNumber"]').textContent = user.rollNumber;
+
+            // 4. Load Tools (Real-time)
+            const toolGrid = document.querySelector('#browse-tools .tool-grid');
+            db.collection('tools').onSnapshot(snapshot => {
+                toolGrid.innerHTML = '';
+                if (snapshot.empty) {
+                    toolGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666; padding: 20px;">No tools available at the moment.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const tool = doc.data();
+                    const isAvailable = tool.availableQuantity > 0;
+                    // Use placeholder if no photo URL
+                    const photo = tool.photoURL ? tool.photoURL : 'https://placehold.co/400x300/e2e8f0/1e293b?text=No+Image';
+
+                    toolGrid.innerHTML += `
+                        <div class="tool-card" data-id="${doc.id}" data-name="${tool.name}">
+                            <div class="tool-img-wrapper">
+                                <img src="${photo}" alt="${tool.name}" class="tool-card-img" onerror="this.src='https://placehold.co/400x300/e2e8f0/1e293b?text=Image+Error'">
+                            </div>
+                            <div class="tool-details">
+                                <h3 class="tool-name">${tool.name || 'Unnamed Tool'}</h3>
+                                <div class="tool-meta">
+                                    <div class="meta-row">
+                                        <span class="meta-label">Availability</span>
+                                        <span class="status ${isAvailable ? 'available' : 'borrowed'}">${isAvailable ? 'In Stock' : 'Out of Stock'}</span>
+                                    </div>
+                                    <div class="meta-row">
+                                        <span class="meta-label">Quantity Left</span>
+                                        <span class="meta-value">${tool.availableQuantity || 0} units</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-request" ${!isAvailable ? 'disabled' : ''}>
+                                    ${isAvailable ? 'Request Tool' : 'Unavailable'}
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            });
+
+            // 5. Load Requests & Borrowed Tools (Real-time)
+            const requestTableBody = document.querySelector('#my-requests tbody');
+            const borrowedTableBody = document.querySelector('#my-borrowed tbody');
+
+            db.collection('requests')
+                .where('studentId', '==', user.uid)
+                .orderBy('requestDate', 'desc')
+                .onSnapshot(snapshot => {
+                    requestTableBody.innerHTML = '';
+                    borrowedTableBody.innerHTML = '';
+
+                    let pendingCount = 0, borrowedCount = 0, dueSoonCount = 0, overdueCount = 0;
+                    const now = new Date();
+                    const threeDaysFromNow = new Date();
+                    threeDaysFromNow.setDate(now.getDate() + 3);
+
+                    snapshot.forEach(doc => {
+                        const req = doc.data();
+
+                        // Pending/Rejected Table
+                        if (req.status === 'pending' || req.status === 'rejected') {
+                            if (req.status === 'pending') pendingCount++;
+                            requestTableBody.innerHTML += `
+                                <tr>
+                                    <td>${doc.id.substring(0, 8)}...</td>
+                                    <td>${req.toolName}</td>
+                                    <td>${req.requestDate ? new Date(req.requestDate.toDate()).toLocaleDateString() : 'N/A'}</td>
+                                    <td><span class="status ${req.status}">${req.status}</span></td>
+                                </tr>`;
+                        }
+
+                        // Borrowed Table
+                        if (req.status === 'borrowed') {
+                            borrowedCount++;
+                            const returnDate = req.returnDeadline ? new Date(req.returnDeadline.toDate()) : null;
+                            const isOverdue = returnDate && returnDate < now;
+                            const isDueSoon = returnDate && returnDate > now && returnDate <= threeDaysFromNow;
+
+                            if (isOverdue) overdueCount++;
+                            else if (isDueSoon) dueSoonCount++;
+
+                            borrowedTableBody.innerHTML += `
+                                <tr>
+                                    <td>${req.toolName}</td>
+                                    <td>${req.issueDate ? new Date(req.issueDate.toDate()).toLocaleDateString() : 'N/A'}</td>
+                                    <td>${returnDate ? returnDate.toLocaleDateString() : 'N/A'}</td>
+                                    <td><span class="status ${isOverdue ? 'rejected' : 'borrowed'}">${isOverdue ? 'Overdue' : 'Active'}</span></td>
+                                </tr>`;
+                        }
+                    });
+
+                    // Update Dashboard Counters
+                    document.getElementById('dash-pending').textContent = pendingCount;
+                    document.getElementById('dash-borrowed').textContent = borrowedCount;
+                    document.getElementById('dash-due').textContent = dueSoonCount;
+                    document.getElementById('dash-overdue').textContent = overdueCount;
+
+                    if (requestTableBody.innerHTML === '') requestTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">No recent requests.</td></tr>';
+                    if (borrowedTableBody.innerHTML === '') borrowedTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">No currently borrowed tools.</td></tr>';
+                }, error => {
+                    console.error("Requests listener error:", error);
+                    if (error.code === 'failed-precondition') {
+                        console.warn("Missing index for requests query. Check console for link to create it.");
+                    }
+                });
+
+            // 6. Request Action (Delegation)
+            document.body.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('btn-request') && !e.target.disabled) {
+                    const btn = e.target;
+                    const card = btn.closest('.tool-card');
+                    const toolName = card.dataset.name;
+
+                    if (confirm(`Request to borrow: ${toolName}?`)) {
+                        btn.disabled = true;
+                        btn.textContent = "Sending...";
+                        try {
+                            await db.collection('requests').add({
+                                studentId: user.uid,
+                                studentName: user.fullName || user.email,
+                                toolId: card.dataset.id,
+                                toolName: toolName,
+                                requestDate: firebase.firestore.FieldValue.serverTimestamp(),
+                                status: 'pending'
+                            });
+                            alert('Request Sent! Awaiting admin approval.');
+                            btn.textContent = "Pending";
+                        } catch (error) {
+                            alert("Failed to send request: " + error.message);
+                            btn.disabled = false;
+                            btn.textContent = "Request Tool";
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
