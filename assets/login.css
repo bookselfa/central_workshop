@@ -277,3 +277,191 @@ a.link{ color:var(--accent); text-decoration:none; font-weight:600; cursor: poin
 }
 .status.success{ background: #e9f6ef; color:#0f7a3a; display:block; }
 .status.error{ background: #fff1f0; color:#a93b2b; display:block; }
+
+/* ==========================================================
+   ⚡ ENHANCED RESPONSIVE DESIGN — Login & Register Page
+   ========================================================== */
+
+@media (max-width: 1100px) {
+  .card {
+    max-width: 90%;
+  }
+  .heading {
+    font-size: 30px;
+  }
+  .subtext {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 880px) {
+  body {
+    padding: 20px;
+    align-items: flex-start;
+  }
+
+  .card {
+    flex-direction: column;
+    min-height: unset;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .left {
+    flex-basis: 220px;
+    height: 220px;
+    background-position: center;
+    background-size: cover;
+    padding: 20px;
+  }
+
+  .brand-title {
+    font-size: 24px;
+  }
+
+  .brand-sub {
+    font-size: 13px;
+  }
+
+  .right {
+    padding: 32px 26px;
+  }
+
+  .form-container {
+    max-width: 100%;
+  }
+
+  .heading {
+    font-size: 26px;
+    text-align: center;
+  }
+
+  .subtext {
+    text-align: center;
+  }
+
+  .checkbox-row {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .btn {
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .left {
+    flex-basis: 180px;
+    height: 180px;
+  }
+
+  .brand-title {
+    font-size: 20px;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+  }
+
+  .heading {
+    font-size: 24px;
+  }
+
+  .right {
+    padding: 28px 20px;
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .input {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+    align-items: center;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 400px;
+    flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .left {
+    display: none; /* hides side image cleanly */
+  }
+
+  .right {
+    padding: 26px 18px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .form-container {
+    max-width: 100%;
+  }
+
+  .heading {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .subtext {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .input-wrapper {
+    padding: 10px 12px;
+  }
+
+  .input {
+    font-size: 14px;
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .help {
+    font-size: 13px;
+  }
+
+  .status {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+@media (max-width: 480px) {
+  .left {
+    display: flex;
+    height: 140px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    padding: 10px;
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+  .brand-sub {
+    font-size: 11px;
+  }
+}
