@@ -485,6 +485,92 @@
                 transform: translateY(0);
             }
         }
+
+        /* ------------------- HAMBURGER MENU ------------------- */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+            z-index: 1100;
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 24px;
+            height: 3px;
+            background-color: #2f3c4e;
+            margin: 4px 0;
+            transition: 0.3s ease;
+            border-radius: 2px;
+        }
+
+        /* Animate to “X” */
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* ------------------- MOBILE NAV ------------------- */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: var(--top-nav-height);
+                left: 0;
+                width: 100%;
+                background: #ffffff;
+                border-top: 1px solid #e0e0e0;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-links.active {
+                display: block;
+                animation: fadeIn 0.3s ease-in-out;
+            }
+
+            .nav-links ul {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0;
+                margin: 0;
+            }
+
+            .nav-links li {
+                width: 100%;
+            }
+
+            .nav-links li a {
+                display: block;
+                width: 100%;
+                padding: 14px 20px;
+                border-bottom: 1px solid #f3f3f3;
+                color: #2f3c4e;
+            }
+
+            .nav-links li a.active {
+                background: #84cc16;
+                color: white;
+            }
+        }
     </style>
 </head>
 
@@ -497,7 +583,10 @@
                 <img src="./assets/images/dcrust_logo.jpeg" alt="DCRUST Logo" class="nav-logo">
                 <h2>DCRUST</h2>
             </div>
-            <nav class="nav-links">
+
+            <!-- Hamburger icon -->
+
+            <nav class="nav-links" id="nav-links">
                 <ul>
                     <li><a href="#" class="nav-link active" data-target="dashboard">My Dashboard</a></li>
                     <li><a href="#" class="nav-link" data-target="browse-tools">Browse Tools</a></li>
@@ -507,15 +596,22 @@
             </nav>
         </div>
 
+        <div class="user-profile">
+        </div>
+        
         <div class="nav-right">
-            <div class="user-profile">
-                <a href="#" class="nav-link" data-target="profile">
-                    <img src="https://placehold.co/40x40/2f3c4e/ffffff?text=S" alt="Student" class="profile-pic">
-                </a>
-            </div>
+            <a href="#" class="nav-link" data-target="profile">
+                <img src="https://placehold.co/40x40/2f3c4e/ffffff?text=S" alt="Student" class="profile-pic">
+            </a>
             <button id="logout-btn" class="btn-logout">Logout</button>
         </div>
+        <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </header>
+
 
     <!-- Main Content -->
     <main class="main-content">
@@ -850,6 +946,17 @@
                 }
             });
         }
+
+        // Hamburger menu functionality
+        const menuToggle = document.getElementById("menu-toggle");
+        const navLinks = document.getElementById("nav-links");
+
+        menuToggle.addEventListener("click", () => {
+            menuToggle.classList.toggle("active");
+            navLinks.classList.toggle("active");
+        });
+
+
     </script>
 </body>
 
