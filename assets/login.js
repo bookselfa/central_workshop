@@ -7,7 +7,6 @@ window.addEventListener('load', () => {
 });
 
 // --- Firebase Configuration ---
-// PASTE YOUR FIREBASE CONFIG HERE
 const firebaseConfig = {
     apiKey: "AIzaSyCD8kg0sb_PLnRYblhtRBKDLM50SwAesa8",
     authDomain: "centralworkshop-8b6af.firebaseapp.com",
@@ -96,27 +95,37 @@ if (loginForm) {
 
         auth.signInWithEmailAndPassword(email, pass)
             .then((userCredential) => {
-                return db.collection('users').doc(userCredential.user.uid).get();
-            })
-            .then((doc) => {
-                if (doc.exists) {
-                    const role = doc.data().role;
-                    showStatus(status, 'ok', 'Login successful! Redirecting...');
-                    setTimeout(() => {
-                        window.location.href = (role === 'admin') ? './admin.html' : './user.html';
-                    }, 1000);
-                } else {
-                    // Auto-create profile if missing (rare fallback)
-                    return db.collection('users').doc(userCredential.user.uid).set({
-                        email: email,
-                        role: 'student',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        window.location.href = './user.html';
-                    });
+                const user = userCredential.user;
+
+                // ✅ Check if email is verified
+                if (!user.emailVerified) {
+                    showStatus(status, 'err', 'Please verify your email before logging in.');
+                    auth.signOut();
+                    return Promise.reject('Email not verified');
                 }
+
+                // Fetch user data from Firestore
+                return db.collection('users').doc(user.uid).get().then((doc) => {
+                    if (doc.exists) {
+                        const role = doc.data().role;
+                        showStatus(status, 'ok', 'Login successful! Redirecting...');
+                        setTimeout(() => {
+                            window.location.href = (role === 'admin') ? './admin.html' : './user.html';
+                        }, 1000);
+                    } else {
+                        // Auto-create profile if missing (rare fallback)
+                        return db.collection('users').doc(user.uid).set({
+                            email: email,
+                            role: 'student',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => {
+                            window.location.href = './user.html';
+                        });
+                    }
+                });
             })
             .catch((error) => {
+                if (error === 'Email not verified') return;
                 console.error("Login Error:", error);
                 let msg = "Invalid credentials.";
                 if (error.code === 'auth/user-not-found') msg = "No account found with this email.";
@@ -126,56 +135,59 @@ if (loginForm) {
     });
 }
 
-// 2. REGISTRATION (OPTIMIZED FOR SPEED)
+// 2. REGISTER (with email verification)
 if (registerForm) {
     registerForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const nameInput = document.getElementById('register-name');
+        const rollInput = document.getElementById('register-rollno');
         const emailInput = document.getElementById('register-email');
         const passInput = document.getElementById('register-password');
 
         const name = nameInput.value.trim();
+        const rollno = rollInput.value.trim();
         const email = emailInput.value.trim();
         const pass = passInput.value;
 
-        if (!name || !email || !pass) {
+        if (!name || !rollno || !email || !pass) {
             showStatus(registerStatus, 'err', 'Please fill in all fields.');
             return;
         }
         if (pass.length < 6) {
-             showStatus(registerStatus, 'err', 'Password must be at least 6 characters.');
-             return;
+            showStatus(registerStatus, 'err', 'Password must be at least 8 characters.');
+            return;
         }
 
-        // Disable button to prevent double-submit
         const submitBtn = registerForm.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating...';
         showStatus(registerStatus, 'ok', 'Creating account...');
 
         auth.createUserWithEmailAndPassword(email, pass)
-            .then((userCredential) => {
-                // 1. AUTH SUCCESS: Show success message immediately!
-                showStatus(registerStatus, 'ok', 'Account created! Redirecting...');
-                
-                // 2. FIRESTORE SAVE: Happens in background while we wait to redirect
-                const saveProfilePromise = db.collection('users').doc(userCredential.user.uid).set({
+            .then(async (userCredential) => {
+                const user = userCredential.user;
+
+                // Save profile info in Firestore
+                await db.collection('users').doc(user.uid).set({
                     fullName: name,
+                    rollNumber: rollno,
                     email: email,
                     role: 'student',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // 3. REDIRECT: After 1.5s, switch to login regardless of slow Firestore
+                // ✅ Send verification email
+                await user.sendEmailVerification();
+
+                showStatus(registerStatus, 'ok', 'Verification email sent! Please verify before login.');
+
                 setTimeout(() => {
                     registerForm.reset();
                     switchToLogin();
-                    showStatus(status, 'ok', 'Please log in with your new account.');
+                    showStatus(status, 'ok', 'Please check your inbox and verify your email.');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Register';
-                }, 1500);
-
-                return saveProfilePromise;
+                }, 2000);
             })
             .catch((error) => {
                 console.error("Registration Error:", error);
@@ -203,4 +215,4 @@ if (forgotLink) {
             .then(() => showStatus(status, 'ok', 'Password reset link sent to your email.'))
             .catch((error) => showStatus(status, 'err', error.message));
     });
-} 
+}
