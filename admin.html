@@ -71,8 +71,8 @@
             /* background-color: var(--text-dark); */
             border-radius: 50px;
             /* stroke: 2px solid black; */
-            border-width: 2px;
-            border-style: solid;
+            /* border-width: 2px; */
+            /* border-style: solid; */
             padding: 0px 0px 0px 15px;
             display: flex;
             align-items: center;
@@ -400,6 +400,8 @@
             background-color: #6c757d;
             color: white;
             margin-right: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         @keyframes fadeIn {
@@ -585,7 +587,7 @@
                     <!-- Hidden field to store current photo URL when editing -->
                     <input type="hidden" id="current-photo-url">
                     <div class="form-group">
-                        <label for="tool-photo">Tool Photo (Optional)</label>
+                        <label for="tool-photo">Tool Photo</label>
                         <input type="file" id="tool-photo" name="tool-photo" accept="image/*">
                     </div>
                     <div class="modal-footer">
@@ -623,7 +625,7 @@
                 db.collection('users').doc(user.uid).get()
                     .then(doc => {
                         if (doc.exists && doc.data().role === 'admin') {
-                            document.querySelector('.profile-info span').textContent = doc.data().fullName || 'Admin';
+                            document.querySelector('.profile-info span').textContent = doc.data().name || 'Admin';
                             initializeApp(user);
                         } else {
                             window.location.href = 'user.html';
