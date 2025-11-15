@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tool Management System</title>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
@@ -437,7 +436,6 @@
 
 <body>
 
-    <!-- Top Navigation Bar -->
     <header class="top-nav">
         <div class="nav-left">
             <div class="nav-header">
@@ -465,9 +463,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Dashboard Section -->
         <section id="dashboard" class="content-section active">
             <header>
                 <h1>Dashboard</h1>
@@ -492,7 +488,6 @@
             </div>
         </section>
 
-        <!-- Manage Tools Section -->
         <section id="manage-tools" class="content-section">
             <div class="table-wrapper">
                 <div class="table-header">
@@ -511,13 +506,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Tool rows will be inserted here by JS -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Manage Requests Section -->
         <section id="manage-requests" class="content-section">
             <div class="table-wrapper">
                 <div class="table-header">
@@ -534,13 +527,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Request rows inserted here by JS -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Borrowed Tools Section -->
         <section id="borrowed-tools" class="content-section">
             <div class="table-wrapper">
                 <div class="table-header">
@@ -558,15 +549,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Borrowed tool rows inserted here by JS -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </section>
 
     </main>
 
-    <!-- The Modal for Add/Edit Tool -->
     <div id="tool-modal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -584,12 +573,24 @@
                         <label for="tool-quantity">Total Quantity</label>
                         <input type="number" id="tool-quantity" name="tool-quantity" min="1" required>
                     </div>
-                    <!-- Hidden field to store current photo URL when editing -->
-                    <input type="hidden" id="current-photo-url">
-                    <div class="form-group">
-                        <label for="tool-photo">Tool Photo</label>
-                        <input type="file" id="tool-photo" name="tool-photo" accept="image/*">
+
+                    <div class="form-group" id="current-photo-display" style="display: none;">
+                        <label>Current Photo:</label>
+                        <img id="modal-current-photo" src="" alt="Current Tool Photo"
+                            style="max-width: 100px; max-height: 100px; border-radius: 8px; margin-top: 5px; display: block;">
                     </div>
+
+                    <div class="form-group">
+                        <label for="tool-photo-url">Photo URL (Paste Link)</label>
+                        <input type="url" id="tool-photo-url" name="tool-photo-url"
+                            placeholder="Paste image URL here">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tool-photo-file">Or Upload New Photo (Overrides URL)</label>
+                        <input type="file" id="tool-photo-file" name="tool-photo-file" accept="image/*">
+                    </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -659,22 +660,28 @@
                 auth.signOut().then(() => window.location.href = 'index.html');
             });
 
-            // 3. MODAL & FORM
+            // 3. MODAL & FORM (Updated Variables)
             const modalOverlay = document.getElementById('tool-modal');
             const modalTitle = document.getElementById('modal-title');
             const toolForm = document.getElementById('tool-form');
             const toolIdField = document.getElementById('tool-id');
             const toolNameField = document.getElementById('tool-name');
             const toolQuantityField = document.getElementById('tool-quantity');
-            const toolPhotoField = document.getElementById('tool-photo');
-            const currentPhotoUrlField = document.getElementById('current-photo-url');
+            
+            // New photo field variables
+            const currentPhotoDisplay = document.getElementById('current-photo-display');
+            const modalCurrentPhoto = document.getElementById('modal-current-photo');
+            const toolPhotoUrlField = document.getElementById('tool-photo-url');
+            const toolPhotoFileField = document.getElementById('tool-photo-file');
+
 
             const openModal = () => modalOverlay.style.display = 'flex';
             const closeModal = () => {
                 modalOverlay.style.display = 'none';
                 toolForm.reset();
                 toolIdField.value = '';
-                currentPhotoUrlField.value = '';
+                currentPhotoDisplay.style.display = 'none'; // Hide current photo display
+                modalCurrentPhoto.src = ''; // Clear current photo src
             };
 
             document.querySelector('.add-tool-btn').addEventListener('click', () => {
@@ -685,7 +692,7 @@
 
             // 4. REAL-TIME DATA LISTENERS
 
-            // Tools Listener
+            // Tools Listener (No change needed here for this update)
             const toolTableBody = document.querySelector('#manage-tools tbody');
             db.collection('tools').onSnapshot(snapshot => {
                 toolTableBody.innerHTML = '';
@@ -710,7 +717,7 @@
                 document.getElementById('dash-total').textContent = totalTools;
             });
 
-            // Requests Listener
+            // Requests Listener (No change)
             const requestTableBody = document.querySelector('#manage-requests tbody');
             const borrowedTableBody = document.querySelector('#borrowed-tools tbody');
             db.collection('requests').orderBy('requestDate', 'desc').onSnapshot(snapshot => {
@@ -751,16 +758,39 @@
                 document.getElementById('dash-overdue').textContent = overdueCount;
             });
 
-            // 5. EVENT DELEGATION (ACTIONS)
+            // 5. EVENT DELEGATION (ACTIONS) (Updated 'btn-edit' logic)
             document.body.addEventListener('click', async (e) => {
                 // EDIT
                 if (e.target.classList.contains('btn-edit')) {
                     const row = e.target.closest('tr');
+                    const toolId = row.dataset.id; // Tool ID lein
+                    
                     modalTitle.textContent = 'Edit Tool';
-                    toolIdField.value = row.dataset.id;
+                    toolIdField.value = toolId;
                     toolNameField.value = row.querySelector('.t-name').textContent;
                     toolQuantityField.value = row.querySelector('.t-qty').textContent;
-                    currentPhotoUrlField.value = row.querySelector('.tool-photo').src;
+
+                    // Asli photo URL database se fetch karein
+                    try {
+                        const toolDoc = await db.collection('tools').doc(toolId).get();
+                        const photoURL = toolDoc.data().photoURL || '';
+
+                        if (photoURL) {
+                            currentPhotoDisplay.style.display = 'block'; // Photo dikhayein
+                            modalCurrentPhoto.src = photoURL;
+                            toolPhotoUrlField.value = photoURL; // URL field mein daalein
+                        } else {
+                            // Agar photoURL nahi hai toh fields ko reset karein
+                            currentPhotoDisplay.style.display = 'none';
+                            modalCurrentPhoto.src = '';
+                            toolPhotoUrlField.value = '';
+                        }
+                    } catch (err) {
+                        console.error("Error fetching tool doc:", err);
+                        currentPhotoDisplay.style.display = 'none';
+                        toolPhotoUrlField.value = '';
+                    }
+                    
                     openModal();
                 }
                 // DELETE
@@ -796,7 +826,7 @@
                 }
             });
 
-            // 6. FORM SUBMIT (ADD/EDIT) - FIXED!
+            // 6. FORM SUBMIT (ADD/EDIT) - (Updated Logic)
             toolForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = toolForm.querySelector('button[type="submit"]');
@@ -804,13 +834,21 @@
 
                 try {
                     const toolId = toolIdField.value;
-                    const file = toolPhotoField.files[0];
-                    let photoURL = currentPhotoUrlField.value;
+                    const file = toolPhotoFileField.files[0]; // File yahan se lein
+                    const urlInput = toolPhotoUrlField.value.trim(); // URL yahan se lein
+                    let photoURL = ''; // Default URL
 
                     if (file) {
+                        // Priority 1: Agar file upload ki hai
                         const ref = storage.ref(`tools/${Date.now()}_${file.name}`);
                         await ref.put(file);
                         photoURL = await ref.getDownloadURL();
+                    } else if (urlInput) {
+                        // Priority 2: Agar file nahi hai, toh URL field check karo
+                        photoURL = urlInput;
+                    } else {
+                        // Agar dono nahi, toh 'photoURL' khaali save hoga
+                        photoURL = '';
                     }
 
                     const toolData = {
@@ -824,7 +862,10 @@
                         const doc = await db.collection('tools').doc(toolId).get();
                         const oldTotal = doc.data().totalQuantity || 0;
                         const oldAvailable = doc.data().availableQuantity || 0;
-                        toolData.availableQuantity = oldAvailable + (toolData.totalQuantity - oldTotal);
+                        // Calculate new available quantity
+                        const diff = toolData.totalQuantity - oldTotal;
+                        toolData.availableQuantity = Math.max(0, oldAvailable + diff); // Ensure it doesn't go below 0
+
                         await db.collection('tools').doc(toolId).update(toolData);
                         alert('Tool updated!');
                     } else {
